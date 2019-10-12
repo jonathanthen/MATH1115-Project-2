@@ -1,0 +1,62 @@
+---
+title: "MATH1115 Project 2"
+author: "Jonathan Then (490605077)"
+date: "Wednesday / 1PM / Carslaw 705-706 Computer Lab"
+output: 
+  prettydoc::html_pretty:
+    theme: tactile
+---
+
+# International Students
+
+<br>
+
+## Executive Summary
+The dataset was collected through the University of Sydney's student system by the department of Institutional Analytics and Planning (IAP). They are in charge of data reporting and analysis of students. In 2018, the department retrieved data of students in the Junior Mathematics units.
+
+## IDA
+*Source Data:*  
+The given data is sourced from the Sydney Institutional Analytics and Data Science, managed by Joshua Lee, with ethics permission and approval by the DVC (Education) Prof. Pip Pattison. It is interesting to note that IAP submits regular data reports (student and staff) to the Australian Government Department of Education and Training to fulfil the University's statutory reporting requirements. Hence, the dataset provided by a reputable institution is highly reliable.
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+student = read.csv("DATA1001_2019_S2C_PROJECT3_DATA_v2.csv")
+```
+
+```{r}
+intl = student %>% filter(Domestic...international.status == 'International')
+
+#dome = student %>% filter(Domestic...international.status == 'Domestic')
+
+#table(student$Fake.UoS.Identifier, student$Domestic...international.status)
+
+#Aunit = student %>% filter(Fake.UoS.Identifier == 'UNIT A')
+
+#ggplot(student, aes(x=Domestic...international.status, y=UoS.Mark, colour=Gender)) + geom_boxplot()
+```
+
+```{r}
+#table(student$Domestic...international.status, student$Gender)
+table(intl$Domestic...international.status, intl$Gender)
+
+#status <- matrix(c(3589, 3200, 2238, 1818), nrow = 2, ncol = 2, byrow = TRUE, dimnames = list(c("Domestic", International"), c("Male", "Female")))
+status <- matrix(c(2238, 1818), nrow = 1, ncol = 2, byrow = TRUE, dimnames = list(c("International"), c("Male", "Female")))
+
+mosaicplot(status)
+```
+Hypothesis Testing
+H0: Domestic/international status is independent of gender.
+
+H1: Domestic/international status is NOT independent of gender.
+
+```{r}
+chisq.test(status)
+```
+
+```{r}
+table(student$Age.at.Semester.Start, student$Gender)
+
+age <- matrix(c(1008, 987, 3584, 4185, 323, 502, 103, 153), nrow = 4, ncol = 2, byrow = TRUE, dimnames = list(c("18 and under", "19-21", "22-25", "Over 25"), c("Female", "Male")))
+
+mosaicplot(age)
+chisq.test(age)
+```
