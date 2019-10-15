@@ -1,0 +1,112 @@
+---
+title: "MATH1115 Project 2"
+author: "Jonathan Then (490605077)"
+date: "Wednesday / 1PM / Carslaw 705-706 Computer Lab"
+output: 
+  prettydoc::html_pretty:
+    theme: tactile
+---
+
+# Stakeholder: Year 12 High School Students
+
+<br>
+
+## Executive Summary
+The dataset was collected through the student system of the University of Sydney by the department of Institutional Analytics and Planning (IAP) which  is responsible for student data reporting and analysis. In 2018, the department retrieved data of students enrolled in Junior Mathematics units.  
+
+This report is aimed towards high school students who are weighing their options after completing secondary education. Most will either undertake full time tertiary studies, enter the workforce or occupy both at the same time. It is imperative that students make the best choice for their future prospects.
+
+## Initial Data Analysis (IDA)
+*Source Data:*  
+The given data is sourced from the Sydney Institutional Analytics and Data Science, managed by Joshua Lee, with ethics permission and approval by the DVC (Education) Prof. Pip Pattison. It is interesting to note that IAP submits regular data reports (student and staff) to the Australian Government Department of Education and Training to fulfil the University's statutory reporting requirements. Hence, the dataset provided by a reputable institution is highly reliable.
+
+*Ethics:*  
+The university has stated clearly on their website regarding the use and disclosure of personal information. By going to https://sydney.edu.au/students/your-privacy.html, they state that the data used will be to assist the university in making better decisions regarding future operations and services.
+
+*Limitations:*
+
+
+## Exploring Data  
+A research done by the Australasian Association for Institutional Research back in 1998 found that students who did undertake full-time studies produced the best proportionate results in terms of subject passes.
+
+A Grattan Institute study released in 2018 found that reducing study load, or studying part-time, was the major cause of students failing to complete their studies. 
+
+**Research Question:  
+Are students who do full time studies more likely to pass their Junior Mathematics units?**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+student = read.csv("DATA1001_2019_S2C_PROJECT3_DATA_v2.csv")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(student, aes(x=Mode.of.Study, y=UoS.Mark, fill=Mode.of.Study)) + geom_boxplot() +
+xlab("Mode of Study") + 
+ylab("Marks") + 
+ggtitle("Marks for different Modes of Study") +
+theme(plot.title = element_text(size = 12, face = "bold")) +
+theme(panel.grid.major = element_blank(), 
+      plot.background = element_rect(),
+      panel.background = element_rect(), 
+      legend.position = "none") + 
+scale_fill_manual(values = c("#00AFBB", "#FC4E07", "#E7B800"))
+
+table(student$Mode.of.Study)
+```
+
+Enrolled in Junior Mathematics units, there were 10527 Full Time students, 315 Part Time students and 3 of unknown status.  
+
+Assumption:   
+The 3 students of unknown status were omitted from further analysis as they are assumed to have not selected a mode of study during enrolment.
+
+The dataset was filtered to make sure only **domestic students** are accounted for in the analysis. The resulting dataset was further separated into two categories, whether they passed (marks >= 50) or failed (marks < 50) their junior Mathematics unit.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+pass = student %>% filter(Domestic...international.status == 'Domestic') %>% filter(UoS.Mark >= 50) %>% filter(Mode.of.Study != 'Unknown')
+fail = student %>% filter(Domestic...international.status == 'Domestic') %>% filter(UoS.Mark < 50)
+
+table(pass$Mode.of.Study)
+table(fail$Mode.of.Study)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+removeunknown = student %>% filter(Mode.of.Study != 'Unknown')
+
+legend_title <- "Legend"
+
+ggplot(removeunknown, aes(x=Mode.of.Study, fill=(UoS.Mark >= 50))) + geom_bar(colour = 'black') +
+xlab(" ") + 
+ylab("Frequency") + 
+scale_fill_manual(legend_title, labels = c("Fail", "Pass"), values = c("#E33223", "#54DE20")) +
+theme(text = element_text(color = "black"),
+panel.background = element_rect(fill = "white"),
+panel.grid.major.y = element_line(color = "grey"),
+panel.grid.minor.y = element_line(color = "grey", linetype = "dashed"),
+panel.grid.major.x = element_blank(),
+panel.grid.minor.x = element_blank(),
+strip.background = element_rect(fill = "white", color="grey"), axis.text.x = element_text(size = 10, face = 'bold', vjust=1, lineheight=1, colour = "black"),
+axis.text.y = element_text(size = 10, vjust=1, lineheight=1, colour = "black")) +
+labs(title = "Frequency of Pass and Fail for Mode of Study") +
+theme(legend.position = "right")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+PassFail <- matrix(c(5817, 238, 666, 65), nrow = 2, ncol = 2, byrow = TRUE, dimnames = list(c("Pass", "Fail"), c("Full Time", "Part Time")))
+
+mosaicplot(PassFail, main = 'Frequency of Pass and Fail for Mode of Study', color = c('#54DE20', '#E33223'))
+```
+
+## Hypothesis Testing  
+H0: Passing a Junior Mathematics Unit is independent of the Mode of Study. (There is no association between passing and the mode of study.)  
+H0: Passing a Junior Mathematics Unit is NOT independent of the Mode of Study. (There is an association between passing and the mode of study.)    
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+chisq.test(PassFail)
+```
+
+## Conclusion
+Given the high Chi-squared value and small p-value of less than 0.05 significance level, the mode of study and passing/failing the unit is dependent. This suggests that domestic students who choose to do a university degree full time have a higher chance of passing their Junior Mathematics units which corroborates with the two research articles.
+
+## References
+gratten.edu.au. (2018). Dropping out: The benefits and costs of trying university [online] Available at: https://grattan.edu.au/wp-content/uploads/2018/04/904-dropping-out-the-benefits-and-costs-of-trying-university.pdf [Accessed 14 Oct. 2018].
+
+aair.org.au. (1998). Student performance and the cost of failure [online] Available at: http://www.aair.org.au/app/webroot/media/pdf/AAIR%20Fora/Forum1998/Dobson.pdf [Accessed 14 Oct. 2018].
