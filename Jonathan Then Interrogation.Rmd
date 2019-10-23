@@ -1,0 +1,66 @@
+---
+title: " Interrogating Patrick Conroy's Question"
+
+author: "Jonathan Then Tian Meng (490605077)"
+date: "Wednesday / 1PM / Carslaw 705-706 Computer Lab"
+output:
+  prettydoc::html_pretty:
+    theme: leonids
+---
+
+**Research Question: Is there a correlation between number of times Canvas was accessed in total and attainment for Domestic and International students?**
+
+```{r}
+library(tidyverse)
+student = read.csv("DATA1001_2019_S2C_PROJECT3_DATA_v2.csv")
+```
+
+```{r}
+Total = c("Canvas.access.Week.1", "Canvas.access.Week.2", "Canvas.access.Week.3", "Canvas.access.Week.4", "Canvas.access.Week.5", "Canvas.access.Week.6", "Canvas.access.Week.7", "Canvas.access.Week.8", "Canvas.access.Week.9", "Canvas.access.Week.10", "Canvas.access.Week.11", "Canvas.access.Week.12", "Canvas.access.Week.13")
+
+NewColumn <- student %>%
+group_by(id = row_number()) %>% 
+nest(Total) %>% 
+mutate(TOTAL = map_dbl(data,sum))
+
+student$TotalAccess <- NewColumn$TOTAL
+```
+The number of weeks were added into the data as a new variable.
+
+**Correlation**
+```{r}
+cor(student$TotalAccess, student$UoS.Mark)
+```
+There is a weak correlation of 0.183 between the total number of weeks the students accessed Canvas and their marks.
+
+**Regression**
+```{r}
+lm(student$TotalAccess ~ student$UoS.Mark)
+regression = lm(student$TotalAccess ~ student$UoS.Mark)
+summary(regression)
+```
+The regression line has a positive slope of 0.01242.
+
+**Graphical Representation**
+```{r}
+student$TotalAccess <- as.factor(student$TotalAccess)
+
+ggplot(student, aes(x=TotalAccess, y=UoS.Mark)) + geom_boxplot(fill = "#C497E8", color = "black") + xlab("Total Canvas Access (Weeks)") + ylab("Marks") + ggtitle("Canvas Access (weeks) vs Marks") + theme(panel.background = element_rect(fill = "white"))
+```
+It can be seen that students who access canvas more, achieve better marks.
+
+**Hypothesis Testing**  
+
+Null Hypothesis: Canvas access and marks are independent of each other. (There is no association between canvas access and marks.)  
+
+Alternative Hypothesis: Canvas access and marks are NOT independent of each other. (There is an association between canvas access and marks.)
+
+```{r}
+student$TotalAccess <- as.numeric(student$TotalAccess)
+chisq.test(student$UoS.Mark, student$TotalAccess, simulate.p.value = TRUE, B = 10000)
+```
+**Conclusion**
+
+Given the high Chi-squared value and small p-value of less than 0.05 significance level, canvas access and marks are associated with each other.
+
+However, the data is insufficient to give us a understanding as to how canvas and marks are related. Some students might log in to Canvas to check assignments for a few minutes only and the Canvas access would still have recorded that they have accessed the website. Perhaps, the system could track how long the students are in the Canvas page to give teaching staff a better understanding.
