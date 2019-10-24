@@ -1,0 +1,140 @@
+---
+title: "MATH1115 PROJECT 2 \n Investigating International and Domestic Students' Academic
+  Attainment"
+author: "Patrick Conroy (460385857)"
+date: "Wednesday / 1PM / Carslaw 705-706 Computer Lab"
+output:
+  html_document: default
+  pdf_document: default
+  prettydoc::html_pretty: default
+---
+
+# Sydney University
+
+## Executive Summary
+
+This survey data, sourced from the Sydney Institutional Analytics and Planning (IAP) gives us great insights into the academic attainment of domestic and international students and the factors associated with both high and low levels of academic attainment. In this report, we hope to adequately assess our broader research question, which is whether international students are more likely to attain higher marks than domestic students and if so, whether this is due to their age, mode of study or access to Canvas.
+
+#for above, include: We have concluded that:
+
+## IDA
+
+*Source Data:* http://www.maths.usyd.edu.au/u/UG/JM/DATA1001/r/current/projects/IAPData/DATA1001_2019_S2C_PROJECT3_DATA_v2.csv
+
+Again, this is sourced from the Sydney Institutional Analytics and Planning (IAP), with ethics permission and approval by the DVC (Education) Prof. Pip Pattison.
+
+*Key Stakeholder:*
+
+Our key stakeholder is the University of Sydney. It is pertinent to the university that its students—both domestic and international—achieve a high level of academic attainment, else the university's graduates will be underqualified and the subsequent value of a University of Sydney degree may be perceived to be lower. This is directly relevant to the University of Sydney as if its degrees diminish in perceived value, less students will seek to enrol and the university will struggle to maintain high student enrollment numbers and profitability. 
+
+*Complexity of Data & Classification of Variables:*
+```{r, results="hide"}
+setwd("~/Desktop/MATH1115")
+proj2 <- read.csv("DATA1001_2019_S2C_PROJECT3_DATA_v2.csv")
+
+dim(proj2)
+#There are 10,845 data entries (or students listed) and twenty-six variables.
+
+str(proj2)
+#To view the structure of our dataset.
+
+head(proj2)
+#To view the first few columns of large data sets.
+
+colnames(proj2)
+#To determine names of all the variables.
+```
+
+<br>
+
+## Exploring Data
+
+**Research Question 1 (a): Are international students more likely to attain higher marks in their studies?**
+
+```{r}
+library(tidyverse)
+
+#ggplot(data=proj2) + geom_bar(stat = 'count', aes(x = 'domestic...international.status'))
+
+#ggplot(na.omit(proj2), aes(x = as.factor(Domestic...international.status), y = UoS.Mark)) + geom_col()
+
+proj2 %>% group_by(Domestic...international.status) %>% summarise(Average = mean(UoS.Mark)) %>% ggplot(data = ., aes(x = Domestic...international.status, y = Average, fill = Domestic...international.status)) + xlab("Domestic or International Status") + geom_col(show.legend = F)
+
+ggplot(data = proj2, aes(x = Domestic...international.status, y = UoS.Mark, fill=Domestic...international.status)) + xlab("Domestic or International Status") + ylab("UoS Mark") + geom_boxplot(show.legend = FALSE)
+
+#domestic = subset(proj2,Domestic...international.status=='Domestic')
+
+ggplot(data = proj2, aes(x = Domestic...international.status, y = UoS.Mark, color=Domestic...international.status)) + xlab("Domestic or International Status") + ylab("UoS Mark") + geom_count()
+
+proj2 %>% group_by(Domestic...international.status) %>% summarise(Average = mean(UoS.Mark))
+
+```
+
+Key findings: Domestic students had a slightly higher average mark than international students at ~66.66, whereas International students had an average mark of ~64.92. We have concluded using ggplot that there is not a great discrepancy between the marks of Domestic and International students and their level of attainment is almost the same.
+
+<br>
+
+**Research Question 1. b) Is there a relationship between age and attainment for Domestic and International students, considering marginal difference in marks between the two?**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = proj2, aes(x = Age.at.Semester.Start, y = UoS.Mark, color=Age.at.Semester.Start)) + xlab("Age at Semester Start") + ylab("UoS Mark") + geom_count()
+
+```
+
+Comments: younger students, especially in the 19-21 demographic tended to outperform other demographics. 22-25 typically did not perform as well, and over 25 performed better than 22-25 but had much greater variance.
+
+**Research Question 1. c) Check for correlation: is there a correlation between number of times Canvas was accessed in total and attainment for Domestic and International students?**
+
+```{r}
+Canvas.access.total = proj2$Canvas.access.Week.1+proj2$Canvas.access.Week.2+proj2$Canvas.access.Week.3+proj2$Canvas.access.Week.4+proj2$Canvas.access.Week.5+proj2$Canvas.access.Week.6+proj2$Canvas.access.Week.7+proj2$Canvas.access.Week.8+proj2$Canvas.access.Week.9+proj2$Canvas.access.Week.10+proj2$Canvas.access.Week.11+proj2$Canvas.access.Week.12+proj2$Canvas.access.Week.13+proj2$Canvas.access.Mid.semester.break+proj2$Canvas.access.STUVAC
+
+t.test(Canvas.access.total, proj2$UoS.Mark, var.equal = T)
+
+ftable(proj2$UoS.Mark)
+
+ggplot(data = proj2, aes(x = UoS.Mark)) + geom_bar()
+
+#ggplot(data = proj2, aes(x = UoS.Mark, y = Canvas.access.total/prop.table(UoS.Mark))) + geom_col()
+
+#proj2 %>% group_by(UoS.Mark) %>% summarise(Average = mean(Canvas.access.total)) %>% ggplot(data = ., aes(x = UoS.Mark, y = Average)) + geom_col()
+
+ggplot(data = proj2, aes(x = prop.table(UoS.Mark), y = prop.table(Canvas.access.total))) + geom_col()
+
+```
+
+Generally speaking, we can see a trend that students with higher marks tended to access Canvas more often, however, students with a mark of 50 tended to access Canvas very often, which was an outlier from this data set and from the trend generally. There is definitely an established correlation between checking Canvas and UoS Mark, seeing as the p-value is especially low—lower than 0.05.
+
+The outlier with students achieving marks of 50 is telling, and is probably due to rounding of marks for students near enough to 50—observe how there are zero marks of 49. Otherwise, this outlier would not exist.
+
+<br>
+
+**Research Question 1. d) Given this proved correlation, can we predict Unit of Study mark by the frequency of Canvas access?**
+```{r}
+
+p = ggplot(data = proj2, aes(x = prop.table(UoS.Mark), y = prop.table(Canvas.access.total))) + geom_smooth() + xlab("UoS Mark proportionate") + ylab("Canvas Access proportionate")
+
+L <- proj2 %>%
+  lm(prop.table(Canvas.access.total) ~ prop.table(UoS.Mark), data = .) 
+
+L
+
+p <- p + geom_abline(aes(intercept = 8.558e-05, slope = 7.190e-02), color = "darkgreen", size = 1)
+
+p
+```
+
+Quite clearly, this is *not* a very good model for predicting Unit of Study mark from number of times Canvas has been accessed. Modelling this accurately would be difficult, even with a polynomial curve. 
+
+Research:
+http://theconversation.com/are-international-students-passing-university-courses-at-the-same-rate-as-domestic-students-116666
+
+The findings are *very* similar to mine: "In 2016, international bachelor students failed 15% of all the subjects they attempted, compared to a 14% fail rate for domestic students. These are figures for commencing students, which means for the year they were admitted."
+
+"[T]he differences are not large."
+
+https://www.utas.edu.au/news/2017/11/16/454-research-shows-age-is-no-barrier-to-academic-success/
+
+This conflicts with my own research which shows that generally speaking, younger students tend to perform better than older students.
+
+Finally, there is no research between checking Canvas and marks attained, however, it logically follows that: assessments and learning material are on Canvas <-> if a student accesses this they will be more likely to succeed <-> greater access of Canvas material correlates (very low p-value) to higher marks.
