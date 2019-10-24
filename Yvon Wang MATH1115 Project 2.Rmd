@@ -1,0 +1,71 @@
+
+---
+
+Stakeholder - Teaching Staff: Unit of Study Coordinator
+
+# Executive Summary
+This report aims to analyse and give some insight on whether increased usage of the University of Sydney Canvas website results in a better unit of study mark for junior Maths units. The stakeholder this report is aimed at is the Course Coordinators for these units of study. From the data it was noted that the student with the highest mark out of the entire cohort used the canvas website at least once every week during each of the thirteen teaching weeks. 
+
+# Initial Data Analysis (IDA)
+
+The data for this report was sourced from the University of Sydney’s student system provided by the Institutional Analytics and Planning department which is responsible for the analysis and reporting of student data. This data therefore can be considered fairly reliable as it is sourced from a trackable university department. The data contained 10845 observations which represented each of the students and 27 variables were assessed. A detailed summary of the classification of the variables is included below. Since the real student IDs in the collected data are hidden and a fake student ID is used instead, the data can be considered ethical as it does not intrude on an individual’s privacy as the data cannot be matched to any real student. There are however various limitations to this data. One major limitation is that the data does not reveal the unit of study codes, but rather a fake UoS name is used. This may cause difficulties for teaching staff to make improvement or changes to a particular unit of study based on the analyses. Furthermore, the data only shows whether a student has accessed canvas at least once a week which loses data about the amount of work students actually did using canvas every week.
+
+```{r}
+#packages
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+
+#loading data
+UniData = read.csv("DATA1001_2019_S2C_PROJECT3_DATA_v2.csv", header = TRUE)
+
+#combining columns
+#Weeks 1 - 13 
+colnms = c ("Canvas.access.Week.1", "Canvas.access.Week.2", "Canvas.access.Week.3", "Canvas.access.Week.4", "Canvas.access.Week.5", "Canvas.access.Week.6", "Canvas.access.Week.7", "Canvas.access.Week.8", "Canvas.access.Week.9", "Canvas.access.Week.10", "Canvas.access.Week.11", "Canvas.access.Week.12", "Canvas.access.Week.13")
+
+#Adding a new column Sum of Attendance from Week 1 - 13
+Newdata <- UniData %>%
+  group_by(id = row_number()) %>%
+  nest(colnms) %>%
+  mutate(SUM = map_dbl(data,sum))
+UniData$TotalCanvasAccess <- Newdata$SUM
+
+str(UniData)
+```
+
+# Research Question 1
+## Did use of Canvas and its resources assist students in their studies?
+
+The two variables were analysed in this research question, the cumulative number of weeks that students accessed the canvas website and their UoS marks. It is assumed that students whom accessed the canvas website utilised the given materials. 
+
+From the graph below, it is observed that the student with the highest mark accessed the canvas website every week out of the thirteen weeks. There was a weak correlation between the two variables with a correlation coefficient of 0.18, thus the canvas access may not necessarily imapct student marks.  This idea is suggested by a study performed in 2015 which assessed the resources that a cohort students used in preparation for their final exams. It was found that students whom utilised additional study material such as textbooks outside of material given by the school performed better overall (J. Sanjoy, 2005). 
+
+A regression test performed showed an overall slight overall increase in unit of study marks in response to an increase in canvas website usage with a positive slope of 0.01242 for the regression line. Since the p-value for the regression models is less than 5%, therefore we can say that the model is valid. Also, the p-value for the UoS marks are also less than 5%, thusthe UoS mark is significant in this model. 
+```{r}
+#regression
+lm(TotalCanvasAccess ~ UoS.Mark, data = UniData)
+summary(lm(TotalCanvasAccess ~ UoS.Mark, data = UniData))
+```
+The association between canvas usage and student's marks was checked using the chi-squre test. The Null and alternative hypotheses are as follows: 
+
+H0: The amount of canvas access and marks are independent of each other
+
+H1: The amount of canvas access and marks relate to each other
+
+From the hypothesis test a high chi-squared value and a small p-value less than 0.05 significance was found. Therefore, we can rejcet the null hypothesis and conclude that the two variables have a significant relationship. A study performed in 2017 supports this relationship as researchers concluded that there was a significant relationship between regular study habits and academic performace. Thus regular use of resources on the canvas website should improve UoS marks following this study (R. Mahwish et al, 2017)
+```{r}
+#hypothesis testing
+chisq.test(UniData$UoS.Mark, UniData$TotalCanvasAccess, simulate.p.value = TRUE)
+```
+
+```{r}
+#changing from number to factor
+UniData$TotalCanvasAccess <- as.factor(UniData$TotalCanvasAccess)
+
+#ggplot
+ggplot(UniData, aes(x = TotalCanvasAccess, y = UoS.Mark)) + geom_boxplot(fill = "cadetblue2", color = "black") + theme(panel.background = element_rect(fill = "white", color = "black")) + xlab("Total Number of Weeks of Canvas Access") + ylab("Unit of Study Mark") + ggtitle("Plot of Student's Canvas Access and UoS Mark in Junior Maths Units")
+```
+
+# Conclusion
+Through this data, a conclusive decision about whether the use of the university's canvas website improved student marks cannot be made as data on the nature of student's canvas usage is lacking. However with more data on the ways students use the canvas website include data on hours spent and number of times accessed on a whole throughout the week, a better understanding could be developed. This would help teaching staff such as unit coordinators to better plan and encourage students to use the materials avaliable on the Canvas page.
+
